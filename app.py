@@ -3,6 +3,7 @@ from flask import Flask, redirect, url_for, render_template, abort, request, ses
 import string, os, sys, math, time, json
 from os import environ
 from sqlalchemy import create_engine, Table
+from sqlalchemy.sql import text
 from sqlalchemy.orm import sessionmaker
 from database import User, Base, Item, Order
 from flask import request
@@ -76,20 +77,24 @@ def registration():
 @app.route('/koszyk')
 def koszyk():
     if 'login' in session:
-        return render_template('koszyk.html', data=sessiondb.execute('select orders.item_id, items.name, items.price, count(orders.item_id) as liczba from orders join items on orders.item_id=items.id group by item_id;'))
+        login = session['login']
+        return render_template('koszyk.html', data=sessiondb.execute('select orders.item_id, items.name, items.price, count(orders.item_id) as liczba from orders join items on orders.item_id=items.id where orders.user_id = :val group by item_id;', {'val':login}))
     return render_template('login.html')
 
 @app.route('/koszyk_dodaj/<int:item_id>')
 def koszyk_dodaj(item_id):    
-        sessiondb.add(Order(item_id))
+        sessiondb.add(Order(item_id, session['login']))
         sessiondb.commit()
-        return render_template('koszyk.html', data=sessiondb.execute('select orders.item_id, items.name, items.price, count(orders.item_id) as liczba from orders join items on orders.item_id=items.id group by item_id;'))
+        login = session['login']
+        return render_template('koszyk.html', data=sessiondb.execute('select orders.item_id, items.name, items.price, count(orders.item_id) as liczba from orders join items on orders.item_id=items.id where orders.user_id = :val group by item_id;', {'val':login}))
 
 @app.route('/koszyk_usun/<int:item_id>')
 def koszyk_usun(item_id):    
-        sessiondb.query(Order).filter_by(id=item_id).delete()
+        login = session['login']
+        sessiondb.execute('delete from orders where orders.item_id = :iid and orders.user_id = :val limit 1;',{'iid': item_id, 'val': login})
         sessiondb.commit()
-        return render_template('/koszyk.html', data=sessiondb.execute('select orders.item_id, items.name, items.price, count(orders.item_id) as liczba from orders join items on orders.item_id=items.id group by item_id;'))
+        login = session['login']
+        return render_template('/koszyk.html', data=sessiondb.execute('select orders.item_id, items.name, items.price, count(orders.item_id) as liczba from orders join items on orders.item_id=items.id where orders.user_id = :val group by item_id;', {'val':login}))
 
 @app.route('/profil')
 def profil():
@@ -101,11 +106,22 @@ def profil():
 def zamow():
     if 'login' in session:
         suma = 0
-        data=sessiondb.execute('select orders.item_id, items.name, items.price, count(orders.item_id) as liczba from orders join items on orders.item_id=items.id group by item_id;')
+        orderData = ''
+        login = session['login']
+        data=sessiondb.execute('select orders.item_id, items.name, items.price, count(orders.item_id) as liczba from orders join items on orders.item_id=items.id where orders.user_id = :val group by item_id;', {'val':login})
         for it in data:
             suma += int(it[2])*int(it[3])
-        session['time'] = time.time()	
-        sessiondb.execute('delete from orders;')
+            orderData += str(it[0]) + ' ' + str(it[2]) + ' ' + str(it[3]) + ' '
+        session['time'] = time.time()
+        f = open('orders.txt', 'r+')
+        notes = json.load(f)
+        new = {'user': str(login), 'data': str(orderData)}
+        notes.insert(0, new)
+        f.close()
+        f = open('orders.txt', 'w')
+        json.dump(notes, f)
+        f.close()
+        sessiondb.execute('delete from orders where orders.user_id = :val;',{'val': login})
         sessiondb.commit()
         return render_template('zamowienie.html',suma=suma)
     return render_template('login.html', info='')

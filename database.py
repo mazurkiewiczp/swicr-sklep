@@ -60,13 +60,18 @@ class Order(Base):
     __tablename__ = "orders"
     id = Column(Integer, primary_key=True)
     item_id = Column(Integer)
+    user_id = Column(Integer)
 
-    def __init__(self, item_id):
+    def __init__(self, item_id, user_id):
         self.item_id = item_id
+        self.user_id = user_id
 
     def __repr__(self):
         return '<Order %r>' % self.id
 
     def set_item_id(self, item_id):
         self.item_id = item_id
+
+    def set_user_id(self, user_id):
+        self.item_id = user_id
 
