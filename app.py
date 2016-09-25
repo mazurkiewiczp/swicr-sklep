@@ -102,12 +102,22 @@ def profil():
         return render_template('profil.html')
     return render_template('login.html', info='')
 
-@app.route('/zamow')
+@app.route('/dalej')
+def dalej():
+    if 'login' in session:
+        return render_template('dalej.html')
+    return render_template('login.html', info='')
+
+@app.route('/zamow', methods=['GET', 'POST'])
 def zamow():
     if 'login' in session:
         suma = 0
         orderData = ''
         login = session['login']
+        if request.method == 'POST':
+            dostawa = str(request.form['iin']) + ' ' + str(request.form['ulica']) + ' ' + str(request.form['nr']) + ' ' + str(request.form['miasto']) + ' ' + str(request.form['kod']) + ' ' + str(request.form['telefon'])
+        else:
+            dostawa = 'odbior osobisty'
         data=sessiondb.execute('select orders.item_id, items.name, items.price, count(orders.item_id) as liczba from orders join items on orders.item_id=items.id where orders.user_id = :val group by item_id;', {'val':login})
         for it in data:
             suma += int(it[2])*int(it[3])
@@ -115,7 +125,8 @@ def zamow():
         session['time'] = time.time()
         f = open('orders.txt', 'r+')
         notes = json.load(f)
-        new = {'user': str(login), 'data': str(orderData)}
+        date = time.strftime("%c")
+        new = {'user': str(login), 'order': str(orderData), 'dostawa': str(dostawa), 'date': str(date)}
         notes.insert(0, new)
         f.close()
         f = open('orders.txt', 'w')

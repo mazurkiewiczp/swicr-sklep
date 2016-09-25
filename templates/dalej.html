@@ -34,12 +34,24 @@
 
   <div class="container">
     <div class="well">
-      <h3>Sklep</h3>
-	 <h2>Zamówienie na kwotę {{suma}} zł zostało złożone</h2>
-	<p>
-	 Masz 10 sekund na opłacenie zamówienia. Po tym czasie zamówienie zostanie anulowane.
-	</p>
-	<form action="/oplata"><input type="submit" value="Opłać" /></form>
+	<h2>Adres dostawy</h2>
+        <form method="post" action="/zamow">
+        <p><input type="text" name="iin" value="" placeholder="Imię i Nazwisko" required></p>
+        <p><input type="text" name="ulica" value="" placeholder="Ulica" required></p>
+        <p><input type="text" name="nr" value="" placeholder="Numer domu/mieszkania" required></p>
+        <p><input type="text" name="miasto" value="" placeholder="Miasto" required></p>
+        <p><input type="text" name="kod" value="" placeholder="Kod pocztowy" required></p>
+        <p><input type="text" name="telefon" value="" placeholder="Telefon" required></p>
+        <p class="submit"><input type="submit" value="Złóż zamówienie"></p>
+      </form>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="well">
+	<h2>Zamów z odbiorem osobistym</h2>
+	<p>Zapraszamy po zamówienie do naszego sklepu stacjonarnego przy ulicy Fikcyjnej 42 w Warszawie.</p>
+	<form action="/zamow"><input type="submit" value="Złóż zamówienie z odbiorem osobistym" /></form>
     </div>
   </div>
 
